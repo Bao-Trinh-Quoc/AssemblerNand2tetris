@@ -1,0 +1,4 @@
+############################ 15-08-2024 ###################
+This will be a two staged process.
+
+First I wll write basic assembler that can translate program into machine code without symbols
