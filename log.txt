@@ -2,3 +2,12 @@
 This will be a two staged process.
 
 First I wll write basic assembler that can translate program into machine code without symbols
+
+We need to parsing each line of the program first
+
+# Note: Remember to add makefile and .gitignore later
+
+There is something called bit-field in C 
+
+Implement a function that can parse a line of code.
+First tho, needed to implement a function to "clean" the line of code
