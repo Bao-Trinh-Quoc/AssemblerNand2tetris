@@ -17,3 +17,5 @@ Pretty challanging bcs I got to read and refined the code
 
 EHHHH, somehow I got the code to work. I can now parse the line of code and get the opcode and operands
 Implemented parseCType and cleanLine and tested it
+
+Modifed the code to more error-proof

@@ -1,8 +1,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "parser.h"
+
 
 
 /*
@@ -61,86 +63,131 @@ instruction *parseIntructions(char *line)
     return NULL;
 }
 
-
-char *cleanLine(char * line) 
+char *cleanLine(char *line) 
 {
-    line = trim(line);
-    char *comment = strstr(line, "//");
-    if (comment != NULL)
-    {
-        *comment = '\0';
-        line = trim(line);
+    if (line == NULL) {
+        return NULL;
     }
 
-    return line;
+    // Create a copy of the input line to avoid modifying the original string
+    char *lineCopy = strdup(line);
+    if (lineCopy == NULL) {
+        // Handle memory allocation failure
+        return NULL;
+    }
+
+    // Trim the copied line
+    char *trimmedLine = trim(lineCopy);
+
+    // Find the comment delimiter
+    char *comment = strstr(trimmedLine, "//");
+    if (comment != NULL) {
+        *comment = '\0';
+        trimmedLine = trim(trimmedLine);
+    }
+
+    // Create a new string to return the cleaned line
+    char *cleanedLine = strdup(trimmedLine);
+    free(lineCopy); // Free the initial copy
+
+    return cleanedLine;
 }
+
 
 char *trim(char *line)
 {
+    // Trim leading whitespace
     while (*line == ' ' || *line == '\t')
     {
         line++;
     }
+
+    // If the string is all whitespace, return an empty string
+    if (*line == '\0')
+    {
+        return line;
+    }
+
+    // Trim trailing whitespace
+    char *end = line + strlen(line) - 1;
+    while (end > line && (*end == ' ' || *end == '\t'))
+    {
+        *end = '\0';
+        end--;
+    }
+
     return line;
 }
 
 int isValidInstruction(char *line)
 {
     line = cleanLine(line);
-    if (line == NULL || *line == '\0')
-    {
-        return 0;
-    }
-    // Handle A-instructions
+   // Handle A-instructions
     if (*line == '@')
     {
         return 1;
     }
 
     // Handle C-instructions
-    return 0;
+    unsigned short comp;
+    unsigned char dest, jump;
+    parseCType(line, &comp, &dest, &jump);
+
+    // If the comp field is invalid, the instruction is invalid
+    return comp != KERR;
 }
 
-// C-instruction format: dest=comp;jump
+
 void parseCType(char *line, unsigned short *comp, unsigned char *dest, unsigned char *jump) 
 {
     *dest = 0;
     *jump = 0;
 
-    char *dpos = strchr(line, '=');
-    char *jpos = strchr(line, ';');
-
-    if(jpos != NULL) 
-    {
-        jpos[0] = '\0';
-        jpos++;
-
-        jpos = trim(jpos);
-
-        *jump = getVal(jpos, &jumps);
+    if (line == NULL) {
+        *dest = KNF;
+        *comp = KNF;
+        *jump = KNF;
+        return;
     }
-    else
-    {
+
+    // Create a copy of the line to avoid modifying the original string
+    char *lineCopy = strdup(line);
+    if (lineCopy == NULL) {
+        // Handle memory allocation failure
+        *dest = KNF;
+        *comp = KNF;
+        *jump = KNF;
+        return;
+    }
+
+    // Tokenize the line to separate the jump part
+    char *jpos = strchr(lineCopy, ';');
+    if (jpos != NULL) {
+        *jpos = '\0';
+        jpos++;
+        jpos = trim(jpos);
+        *jump = getVal(jpos, &jumps);
+    } else {
         *jump = KNF;
     }
 
-    if(dpos != NULL) 
-    {
-        dpos[0] = '\0';
+    // Tokenize the line to separate the dest and comp parts
+    char *dpos = strchr(lineCopy, '=');
+    if (dpos != NULL) {
+        *dpos = '\0';
         dpos++;
-
         dpos = trim(dpos);
-        line = trim(line);
-
-        *dest = getVal(line, &dests);
+        lineCopy = trim(lineCopy);
+        *dest = getVal(lineCopy, &dests);
         *comp = getVal(dpos, &ops);
-    }
-    else
-    {
+    } else {
         *dest = KNF;
-        line = trim(line);
-        *comp = getVal(line, &ops);
-    }    
+        lineCopy = trim(lineCopy);
+        *comp = getVal(lineCopy, &ops);
+    }
+
+    // Free the allocated memory
+    free(lineCopy);
 }
 
 unsigned short getVal(const char *key, const map *list)

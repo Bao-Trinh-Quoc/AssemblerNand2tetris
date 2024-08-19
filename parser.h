@@ -4,6 +4,12 @@
 #define KNF 0xff    // Key not found
 #define KERR 0xeff  // Key errror
 
+#if DEBUG == 1
+#define DEBUG_PRINT(...) printf(__VA_ARGS__)
+#else
+#define DEBUG_PRINT(...) // No-op
+#endif
+
 // There are two types of instructions: A and C
 typedef enum {A, C} optype;
 

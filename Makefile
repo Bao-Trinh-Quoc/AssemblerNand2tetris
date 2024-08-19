@@ -3,6 +3,11 @@ CC = gcc
 # -Werror: Treat warnings as errors
 CFLAGS = -Wall 
 
+# Check if DEBUG is defined and set to 1
+ifeq ($(DEBUG), 1)
+    CFLAGS += -DDEBUG=1
+endif
+
 # Get a list of all .c files in the current directory
 # SRCS = $(wildcard *.c)
 SRCS = main.c parser.c

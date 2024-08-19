@@ -27,21 +27,31 @@ int main(int argc, char *argv[])
 
 
     // Write tests for parseCType
-    char line1[] = "D=M;JGT";
-    unsigned short comp;
-    unsigned char dest;
-    unsigned char jump;
-    parseCType(line1, &comp, &dest, &jump);
+    // char line1[] = "D=M;JGT";
+    // unsigned short comp;
+    // unsigned char dest;
+    // unsigned char jump;
+    // parseCType(line1, &comp, &dest, &jump);
 
-    printf("Line: %s\n", line1);
-    printf("Comp: %d\n", comp);
-    printf("Dest: %d\n", dest);
-    printf("Jump: %d\n", jump);
+    // printf("Line: %s\n", line1);
+    // printf("Comp: %d\n", comp);
+    // printf("Dest: %d\n", dest);
+    // printf("Jump: %d\n", jump);
 
     // Write tests for cleanLine
-    char line3[] = "D=M // This is a comment";
-    char *result3 = cleanLine(line3);
-    printf("Line: %s\n", result3);
+    // char line3[] = "D=M // This is a comment";
+    // char *result3 = cleanLine(line3);
+    // printf("Line: %s\n", result3);
     
+    // Write tests for isValidInstruction
+    // printf("isValidInstruction: %d\n", isValidInstruction("@2"));
+    // printf("isValidInstruction: %d\n", isValidInstruction("D=M;JGT"));
+    // printf("isValidInstruction: %d\n", isValidInstruction("D;JGT"));
+    // printf("isValidInstruction: %d\n", isValidInstruction("       D;JGT  "));
+    // printf("isValidInstruction: %d\n", isValidInstruction("=M;JGT"));
+
+
+
+
     return 0;
 }
