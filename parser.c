@@ -58,12 +58,21 @@ static const map dests = {
 instruction *parseIntructions(char *line) 
 {
     // First, we clean all the whitespaces, comments and empty lines
+    return NULL;
 }
 
 
-char *cleanLine(char *) 
+char *cleanLine(char * line) 
 {
-    
+    line = trim(line);
+    char *comment = strstr(line, "//");
+    if (comment != NULL)
+    {
+        *comment = '\0';
+        line = trim(line);
+    }
+
+    return line;
 }
 
 char *trim(char *line)
@@ -73,4 +82,76 @@ char *trim(char *line)
         line++;
     }
     return line;
+}
+
+int isValidInstruction(char *line)
+{
+    line = cleanLine(line);
+    if (line == NULL || *line == '\0')
+    {
+        return 0;
+    }
+    // Handle A-instructions
+    if (*line == '@')
+    {
+        return 1;
+    }
+
+    // Handle C-instructions
+    return 0;
+}
+
+// C-instruction format: dest=comp;jump
+void parseCType(char *line, unsigned short *comp, unsigned char *dest, unsigned char *jump) 
+{
+    *dest = 0;
+    *jump = 0;
+
+    char *dpos = strchr(line, '=');
+    char *jpos = strchr(line, ';');
+
+    if(jpos != NULL) 
+    {
+        jpos[0] = '\0';
+        jpos++;
+
+        jpos = trim(jpos);
+
+        *jump = getVal(jpos, &jumps);
+    }
+    else
+    {
+        *jump = KNF;
+    }
+
+    if(dpos != NULL) 
+    {
+        dpos[0] = '\0';
+        dpos++;
+
+        dpos = trim(dpos);
+        line = trim(line);
+
+        *dest = getVal(line, &dests);
+        *comp = getVal(dpos, &ops);
+    }
+    else
+    {
+        *dest = KNF;
+        line = trim(line);
+        *comp = getVal(line, &ops);
+    }    
+}
+
+unsigned short getVal(const char *key, const map *list)
+{
+    for (size_t i = 0; i < list->len; i++)
+    {
+        if (strcmp(key, list->list[i].name) == 0)
+        {
+            return list->list[i].data;
+        }
+    }
+
+    return KERR;
 }

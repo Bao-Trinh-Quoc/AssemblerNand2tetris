@@ -55,4 +55,28 @@ char *cleanLine(char *line);
  */
 char *trim(char *line);
 
+/**
+ * return whether the line is a valid instruction or not
+ */
+int isValidInstruction(char *line);
+
+/**
+ * Parses a c-type instruction (dest=comp;jump) where the fields can be filled
+ * only by elements of the respective maps and both dest and comp can be ommited
+ * 
+ * Assumes the string is a C-type instruction with no whitespace or comments
+ * surrounding it (things like dest = comp;\tjump are allowed but not
+ * dest=comp;jump\t)
+ *
+ * Sets comp, dest, and jump to their codes or KNF if that field was not present
+ * and KERR if invalid
+ */
+void parseCType(char *line, unsigned short *comp, unsigned char *dest, unsigned char *jump);
+
+/**
+ * returns the value associated with the key in the map 
+ * returns KNF if the key is not found
+ */
+unsigned short getVal(const char *key, const map *list);
+
 #endif // PARSER_H

@@ -11,3 +11,9 @@ There is something called bit-field in C
 
 Implement a function that can parse a line of code.
 First tho, needed to implement a function to "clean" the line of code
+
+############################ 19-08-2024 ###################
+Pretty challanging bcs I got to read and refined the code
+
+EHHHH, somehow I got the code to work. I can now parse the line of code and get the opcode and operands
+Implemented parseCType and cleanLine and tested it

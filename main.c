@@ -25,8 +25,23 @@ int main(int argc, char *argv[])
     //     printf("Usage: %s [filename]\n", argv[0]);
     // }
 
-    // Test the trim function
-    char *line = "    Hello, World!    ";
-    printf("Before: %s\n", line);
-    printf("After: %s\n", trim(line));
+
+    // Write tests for parseCType
+    char line1[] = "D=M;JGT";
+    unsigned short comp;
+    unsigned char dest;
+    unsigned char jump;
+    parseCType(line1, &comp, &dest, &jump);
+
+    printf("Line: %s\n", line1);
+    printf("Comp: %d\n", comp);
+    printf("Dest: %d\n", dest);
+    printf("Jump: %d\n", jump);
+
+    // Write tests for cleanLine
+    char line3[] = "D=M // This is a comment";
+    char *result3 = cleanLine(line3);
+    printf("Line: %s\n", result3);
+    
+    return 0;
 }
