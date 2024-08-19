@@ -21,3 +21,5 @@ Implemented parseCType and cleanLine and tested it
 Modifed the code to more error-proof
 
 Well. maybe we completed module parser for now :).
+
+Bugs for next session :). Bye! nite nite! 

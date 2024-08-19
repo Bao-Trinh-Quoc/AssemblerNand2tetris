@@ -106,19 +106,24 @@ instruction *parseInstructions(char *line)
         unsigned short comp;
         unsigned char dest, jump;
 
+        // Something wrong here :).
+        
         parseCType(line, &comp, &dest, &jump);
 
         if (dest == KNF)
-            dest == 0;
+            dest = 0;
         if (jump == KNF)
-            jump == 0;
+            jump = 0;
         
+        DEBUG_PRINT("comp: %d, dest: %d, jump: %d\n", comp, dest, jump);
+
         if (comp == KERR || dest == KERR || jump == KERR)
         {
             fprintf(stderr, "Invalid C-instruction: %s\n", line);
             exit(1);
         }
 
+        
         instruction *result = malloc(sizeof(instruction));
         result->type = C;
         result->comp = comp;
