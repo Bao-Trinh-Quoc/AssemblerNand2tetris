@@ -57,9 +57,77 @@ static const map dests = {
     }
 };
 
-instruction *parseIntructions(char *line) 
+instruction *parseInstructions(char *line) 
 {
     // First, we clean all the whitespaces, comments and empty lines
+    line = cleanLine(line);
+
+    // If the line is empty, return NULL
+    if (strlen(line) == 0) {
+        return NULL;
+    }
+    if (strlen(line) >= 2) {
+        // If the line is a comment, return NULL
+        if (line[0] == '/' && line[1] == '/') {
+            return NULL;
+        }
+    }
+    
+    if (line[0] == '@')
+    {
+        if (line[1] >= '0' && line[1] <= '9')
+        {
+            instruction *result = malloc(sizeof(instruction));
+            result->type = A;
+
+            
+            int imm;
+        
+            if (sscanf(line, "@%d", &imm) == 0)
+            {
+                fprintf(stderr, "Invalid A-instruction: %s\n", line);
+                exit(1);
+            }
+
+            if (imm >= 1 << 15) // 2^15 bits or 32768
+            {
+                fprintf(stderr, "Error: address out of bound %d\n", imm);
+                exit(1);
+            }
+
+            result->literal = imm;
+
+            return result;
+        }
+    }
+    else 
+    {   
+        // Handle C-instructions
+        unsigned short comp;
+        unsigned char dest, jump;
+
+        parseCType(line, &comp, &dest, &jump);
+
+        if (dest == KNF)
+            dest == 0;
+        if (jump == KNF)
+            jump == 0;
+        
+        if (comp == KERR || dest == KERR || jump == KERR)
+        {
+            fprintf(stderr, "Invalid C-instruction: %s\n", line);
+            exit(1);
+        }
+
+        instruction *result = malloc(sizeof(instruction));
+        result->type = C;
+        result->comp = comp;
+        result->dest = dest;
+        result->jump = jump;
+
+        return result;
+    }
+
     return NULL;
 }
 

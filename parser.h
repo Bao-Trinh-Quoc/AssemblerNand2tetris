@@ -45,7 +45,7 @@ typedef struct
     *
     * If an invalid command is parsed, an error message is printed and the program terminates.
  */
-instruction *parseInstruction(char *line);
+instruction *parseInstructions(char *line);
 
 
 

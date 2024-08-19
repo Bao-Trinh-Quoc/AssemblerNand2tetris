@@ -19,3 +19,5 @@ EHHHH, somehow I got the code to work. I can now parse the line of code and get 
 Implemented parseCType and cleanLine and tested it
 
 Modifed the code to more error-proof
+
+Well. maybe we completed module parser for now :).
