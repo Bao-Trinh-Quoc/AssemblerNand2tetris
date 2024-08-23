@@ -10,7 +10,7 @@ size_t putBytes(unsigned short bytes, unsigned char **arr, size_t index, size_t 
     int result = size;
 
     if(index + 2 > size) {
-        char *temp = malloc(2*size);
+        unsigned char *temp = malloc(2*size);
         memcpy(temp, *arr, size);
         free(*arr);
         *arr = temp;
@@ -25,7 +25,7 @@ size_t putBytes(unsigned short bytes, unsigned char **arr, size_t index, size_t 
 }
 
 void shrink(unsigned char **arr, size_t newlen) {
-    char *temp = malloc(newlen);
+    unsigned char *temp = malloc(newlen);
     memcpy(temp, *arr, newlen);
     free(*arr);
     *arr = temp;
@@ -41,7 +41,7 @@ void output(FILE *f, unsigned char *data, size_t datac) {
         
         int j;
         for(j = 0; j < 16; j++) {
-            temp[j] = (code >> 15-j) & 1 ? '1' : '0';
+            temp[j] = (code >> (15-j)) & 1 ? '1' : '0';
         }
 
         fprintf(f, "%s", temp);

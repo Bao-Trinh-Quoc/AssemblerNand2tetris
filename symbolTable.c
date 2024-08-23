@@ -115,7 +115,7 @@ void expand(symbolTable *st) {
 
 size_t hash(const char *key, size_t M) {
     /* a and b are just random constants for the "random" number generation */
-    int h, a = 31415, b = 27183;
+    int h, a = 31415;    // b = 27183 is unused variables
 
     for(h = 0; *key != 0; key++)
         h = (a*h + *key) % M;

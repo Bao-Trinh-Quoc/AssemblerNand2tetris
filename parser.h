@@ -49,7 +49,7 @@ void parseCType(char *line, unsigned short *comp, unsigned char *dest, unsigned 
 /**
  * returns whether the line is a valid instruction or not
  */
-int isIstruction(char *line);
+int isInstruction(char *line);
 
 /**
  * removes comments and trims the line
@@ -60,12 +60,12 @@ char *cleanLine(char *line);
  * Removes traling whitespace (puts a \0 at the new end) and returns a pointer
  * to the first non-whitespace char
  */
-static char *trim(char *str);
+char *trim(char *str);
 
 /**
  * returns the value associated with the key in the provided map or returns
  * KERR if the key was not in the map
  */
-static unsigned short getVal(const char *key, const map *list);
+unsigned short getVal(const char *key, const map *list);
 
 #endif
