@@ -6,21 +6,13 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc >= 2)
-    {
-        // Handle I/O files
-        FILE *input = fopen(argv[1], "r");
-
-        if (input == NULL)
-        {
-            printf("Cannot open file %s\n", argv[1]);
-            return 1;
-        }
-
+    if(argc >= 2) {
+        FILE *infile;
+        infile = fopen(argv[1], "r");
         size_t outlen;
         unsigned char *out;
-        outlen = assemble(input, &out);
-        fclose(input);
+        outlen = assemble(infile, &out);
+        fclose(infile);
 
         FILE *outfile;
         char outfilename[64];
@@ -34,9 +26,7 @@ int main(int argc, char *argv[])
         output(outfile, out, outlen);
         fclose(outfile);
         free(out);
-    }
-    else
-    {
+    }else{
         printf("Usage: %s [filename]\n", argv[0]);
     }
 

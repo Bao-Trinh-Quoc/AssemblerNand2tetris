@@ -2,58 +2,45 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "parser.h"
 #include "assembler.h"
+#include "parser.h"
+#include "symbolTable.h"
 
-size_t putBytes(unsigned short bytes, unsigned char **arr, size_t index, size_t size)
-{
+size_t putBytes(unsigned short bytes, unsigned char **arr, size_t index, size_t size) {
     int result = size;
 
-    if (index + 2 > size)
-    {
-        unsigned char *temp = malloc(2*size);
-        if (temp == NULL)
-        {
-            fprintf(stderr, "Error: Memory allocation failed\n");
-            exit(1);
-        }
+    if(index + 2 > size) {
+        char *temp = malloc(2*size);
         memcpy(temp, *arr, size);
         free(*arr);
+        *arr = temp;
 
-        result = 2 * size;
+        result = 2*size;
     }
-
-    (*arr)[index] = (bytes >> 8) & 0xff;
-    (*arr)[index + 1] = bytes & 0xff;
+    
+    (*arr)[index] = (unsigned char) (bytes >> 8);
+    (*arr)[index+1] = (unsigned char) (bytes & 0xff);
 
     return result;
 }
 
-void shrink(unsigned char **arr, size_t newlen)
-{
-    unsigned char *temp = malloc(newlen);
-    if (temp == NULL)
-    {
-        fprintf(stderr, "Error: Memory allocation failed\n");
-        exit(1);
-    }
-
+void shrink(unsigned char **arr, size_t newlen) {
+    char *temp = malloc(newlen);
     memcpy(temp, *arr, newlen);
     free(*arr);
     *arr = temp;
 }
 
-void output(FILE *f, unsigned char *data, size_t datac)
-{
-    for (size_t i = 0; i < datac/2; i++)
-    {
+void output(FILE *f, unsigned char *data, size_t datac) {
+    int i;
+    for(i = 0; i < datac/2; i++) {
         unsigned short code = (data[2*i] << 8) + (data[2*i+1]);
         char temp[18];
         temp[16] = '\n';
         temp[17] = '\0';
-
-        for (size_t j = 0; j < 16; j++)
-        {
+        
+        int j;
+        for(j = 0; j < 16; j++) {
             temp[j] = (code >> 15-j) & 1 ? '1' : '0';
         }
 
@@ -61,64 +48,69 @@ void output(FILE *f, unsigned char *data, size_t datac)
     }
 }
 
-size_t assemble(FILE *f, unsigned char **out)
-{
+size_t assemble(FILE *f, unsigned char **out) {
     char buff[256];
     int i = 0;
     int n = 0;
     int c;
-    int firstPass = 1;  // for later
+    int firstPass = 1;
+    symbolTable st;
+    initDefault(&st);
 
-    // room for 32 instructions
+    //start with room for 32 instructions
     unsigned char *result = malloc(64);
-    size_t r_size = 64;
+    size_t rsize = 64;
 
     do {
         c = fgetc(f);
-
-        if (c != '\n')
-        {
-            if (i >= 256)
-            {
+        
+        if(c != '\n'){
+            if(i >= 256){
                 fprintf(stderr, "Line %d too long (max 256), buffer overflow\n", n);
-                exit(1);
+                abort();
             }
 
             buff[i] = c;
-            i++; 
-        }
-        else 
-        {
+            i++;
+        }else{
             buff[i] = '\0';
             i = 0;
+            
+            if(firstPass) {
+                parseSymbols(buff, &st);
+            }else{
+                replaceSymbols(buff, &st);
 
-            instruction *op = parseInstructions(buff);
+                instruction* op;
+                op = parseInstruction(buff);
 
-            if (op != NULL)
-            {
-                unsigned short data;
-                if (op->type == A)
-                {
-                    data = op->literal;
-                    data = data & 0x7fff;
-                }      
-                else 
-                {
-                    data = (0x7 << 13) + (op->comp << 6) + (op->dest << 3) + op->jump;
+                if(op != NULL) {
+                    unsigned short data;
+                    if(op->type == A) {
+                        data = op->literal;
+                        data = data & 0x7fff;
+                    }else{
+                        data = (0x7 << 13) + (op->comp << 6) + (op->dest << 3) + (op->jump);
+                    }
+
+                    rsize = putBytes(data, &result, 2*n, rsize);
+                    free(op);
+
+                    n++;
                 }
-
-                r_size = putBytes(data, &result, n*2, r_size);
-                free(op);
-
-                n++;
             }
         }
-        
-    }
-    while(c != EOF);
 
-    shrink(&result, n*2);
+        if(c == EOF && firstPass) {
+            c++; /* make sure c != EOF so we go again */
+            firstPass = 0;
+            rewind(f);
+            i = 0;
+        }
+    }while(c != EOF);
+
+    shrink(&result, 2*n);
+    //output(stdout, result, 2*n);
     *out = result;
-
     return 2*n;
 }

@@ -1,19 +1,17 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <ctype.h>
-
 #include "parser.h"
+#include "symbolTable.h"
 
+/* TODO: make these hash tables for speed, we probably won't really need it
+   though and it makes these lists ugly in the code. I could also just sort
+   them and use binary search but maybe that assumes too much. I don't want
+   to just hope no one ever unsorts them.
+ */
 
-
-/*
-    Needed to implement these using Hash tables for speed --- maybe in the future
-*/
-
-/* 
-    All the possible operations in C-instructions
-*/
+/* it takes up a lot of space, but this is formatted like a table in the
+   specification and I'd like to keep it that way */
 static const map ops = {
     37, {
     {"0",   42},
@@ -57,73 +55,47 @@ static const map dests = {
     }
 };
 
-instruction *parseInstructions(char *line) 
-{
-    // First, we clean all the whitespaces, comments and empty lines
+instruction *parseInstruction(char *line) {
     line = cleanLine(line);
-
-    // If the line is empty, return NULL
-    if (strlen(line) == 0) {
-        return NULL;
-    }
-    if (strlen(line) >= 2) {
-        // If the line is a comment, return NULL
-        if (line[0] == '/' && line[1] == '/') {
-            return NULL;
-        }
-    }
     
-    if (line[0] == '@')
-    {
-        if (line[1] >= '0' && line[1] <= '9')
-        {
-            instruction *result = malloc(sizeof(instruction));
+    if(strlen(line) == 0) return NULL;
+
+    if(line[0] == '(') return NULL;
+
+    if(line[0] == '@') { //A-type
+        if(line[1] <= '9' && line[1] >= '0') {
+            instruction* result = malloc(sizeof(instruction));
             result->type = A;
 
-            
             int imm;
-        
-            if (sscanf(line, "@%d", &imm) == 0)
-            {
-                fprintf(stderr, "Invalid A-instruction: %s\n", line);
-                exit(1);
+            if(sscanf(line, "@%d", &imm) == 0) {
+                fprintf(stderr, "Syntax error: %s\n", line);
+                abort();
             }
-
-            if (imm >= 1 << 15) // 2^15 bits or 32768
-            {
-                fprintf(stderr, "Error: address out of bound %d\n", imm);
-                exit(1);
+            
+            if(imm >= 1 << 15) {
+                fprintf(stderr, "Error, address out of bounds %d\n", imm);
             }
 
             result->literal = imm;
 
             return result;
         }
-    }
-    else 
-    {   
-        // Handle C-instructions
+    }else{
         unsigned short comp;
         unsigned char dest, jump;
 
-        // Something wrong here :).
-        
         parseCType(line, &comp, &dest, &jump);
-
-        if (dest == KNF)
-            dest = 0;
-        if (jump == KNF)
-            jump = 0;
         
-        DEBUG_PRINT("comp: %d, dest: %d, jump: %d\n", comp, dest, jump);
+        if(dest == KNF) dest = 0;
+        if(jump == KNF) jump = 0;
 
-        if (comp == KERR || dest == KERR || jump == KERR)
-        {
-            fprintf(stderr, "Invalid C-instruction: %s\n", line);
-            exit(1);
+        if(comp == KERR || dest == KERR || jump == KERR) {
+            /* TODO: make a better error message parseCType adds some \0s to line so it won't be the full command anymore */
+            fprintf(stderr, "Syntax error: %s\n", line);
+            abort();
         }
 
-        
         instruction *result = malloc(sizeof(instruction));
         result->type = C;
         result->comp = comp;
@@ -133,145 +105,86 @@ instruction *parseInstructions(char *line)
         return result;
     }
 
-    return NULL;
+    fprintf(stderr, "Syntax error %s\n", line);
+    abort();
 }
 
-char *cleanLine(char *line) 
-{
-    if (line == NULL) {
-        return NULL;
-    }
+void parseCType(char *line, unsigned short *comp, unsigned char *dest, unsigned char *jump) {
+        *dest = 0;
+        *jump = 0;
 
-    // Create a copy of the input line to avoid modifying the original string
-    char *lineCopy = strdup(line);
-    if (lineCopy == NULL) {
-        // Handle memory allocation failure
-        return NULL;
-    }
+        char *dpos = strchr(line, '=');
+        char *jpos = strchr(line, ';');
 
-    // Trim the copied line
-    char *trimmedLine = trim(lineCopy);
+        if(jpos != NULL) {
+            jpos[0] = '\0';
+            jpos++;
 
-    // Find the comment delimiter
-    char *comment = strstr(trimmedLine, "//");
-    if (comment != NULL) {
-        *comment = '\0';
-        trimmedLine = trim(trimmedLine);
-    }
+            jpos = trim(jpos);
 
-    // Create a new string to return the cleaned line
-    char *cleanedLine = strdup(trimmedLine);
-    free(lineCopy); // Free the initial copy
+            *jump = getVal(jpos, &jumps);
+        }else{
+            *jump = KNF;
+        }
 
-    return cleanedLine;
+        if(dpos != NULL) {
+            dpos[0] = '\0';
+            dpos++;
+
+            dpos = trim(dpos);
+            line = trim(line);
+
+            *dest = getVal(line, &dests);
+            *comp = getVal(dpos, &ops);
+        }else{
+            *dest = KNF;
+            line = trim(line);
+            *comp = getVal(line, &ops);
+        }
 }
 
+int isInstruction(char *line) {
+    line = cleanLine(line);
+    if(line[0] == '@') return 1;
 
-char *trim(char *line)
-{
-    // Trim leading whitespace
-    while (*line == ' ' || *line == '\t')
-    {
-        line++;
-    }
+    unsigned short comp;
+    unsigned char dest, jump;
+    parseCType(line, &comp, &dest, &jump);
+    return comp != KERR;
+}
 
-    // If the string is all whitespace, return an empty string
-    if (*line == '\0')
-    {
-        return line;
-    }
-
-    // Trim trailing whitespace
-    char *end = line + strlen(line) - 1;
-    while (end > line && (*end == ' ' || *end == '\t'))
-    {
-        *end = '\0';
-        end--;
+char *cleanLine(char *line) {
+    line = trim(line);
+    char *comment = strstr(line, "//");
+    if(comment != NULL) {
+        *comment = '\0'; /* cut off the comment if there is one */
+        line = trim(line); /* there might have been more whitespace */
     }
 
     return line;
 }
 
-int isValidInstruction(char *line)
-{
-    line = cleanLine(line);
-   // Handle A-instructions
-    if (*line == '@')
-    {
-        return 1;
-    }
-
-    // Handle C-instructions
-    unsigned short comp;
-    unsigned char dest, jump;
-    parseCType(line, &comp, &dest, &jump);
-
-    // If the comp field is invalid, the instruction is invalid
-    return comp != KERR;
-}
-
-
-void parseCType(char *line, unsigned short *comp, unsigned char *dest, unsigned char *jump) 
-{
-    *dest = 0;
-    *jump = 0;
-
-    if (line == NULL) {
-        *dest = KNF;
-        *comp = KNF;
-        *jump = KNF;
-        return;
-    }
-
-    // Create a copy of the line to avoid modifying the original string
-    char *lineCopy = strdup(line);
-    if (lineCopy == NULL) {
-        // Handle memory allocation failure
-        *dest = KNF;
-        *comp = KNF;
-        *jump = KNF;
-        return;
-    }
-
-    // Tokenize the line to separate the jump part
-    char *jpos = strchr(lineCopy, ';');
-    if (jpos != NULL) {
-        *jpos = '\0';
-        jpos++;
-        jpos = trim(jpos);
-        *jump = getVal(jpos, &jumps);
-    } else {
-        *jump = KNF;
-    }
-
-    // Tokenize the line to separate the dest and comp parts
-    char *dpos = strchr(lineCopy, '=');
-    if (dpos != NULL) {
-        *dpos = '\0';
-        dpos++;
-        dpos = trim(dpos);
-        lineCopy = trim(lineCopy);
-        *dest = getVal(lineCopy, &dests);
-        *comp = getVal(dpos, &ops);
-    } else {
-        *dest = KNF;
-        lineCopy = trim(lineCopy);
-        *comp = getVal(lineCopy, &ops);
-    }
-
-    // Free the allocated memory
-    free(lineCopy);
-}
-
-unsigned short getVal(const char *key, const map *list)
-{
-    for (size_t i = 0; i < list->len; i++)
-    {
-        if (strcmp(key, list->list[i].name) == 0)
-        {
+unsigned short getVal(const char *key, const map *list) {
+    int i;
+    for(i = 0; i < list->len; i++) {
+        if(strcmp(key, list->list[i].name) == 0) {
             return list->list[i].data;
         }
     }
 
     return KERR;
+}
+
+char *trim(char *str) {
+    char *end;
+
+    while(isspace(*str)) str++;
+    if(*str == '\0') return str;
+
+    end = str + strlen(str) - 1;
+    while(end > str && isspace(*end)) end--;
+
+    *(end+1) = '\0';
+
+    return str;
 }

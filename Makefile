@@ -10,7 +10,7 @@ endif
 
 # Get a list of all .c files in the current directory
 # SRCS = $(wildcard *.c)
-SRCS = main.c parser.c assembler.c
+SRCS = main.c parser.c assembler.c symbolTable.c
 
 # Generate a list of corresponding .o files
 OBJS = $(SRCS:.c=.o)
